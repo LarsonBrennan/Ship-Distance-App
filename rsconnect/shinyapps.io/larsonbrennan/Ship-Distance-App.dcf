@@ -1,0 +1,12 @@
+name: Ship-Distance-App
+title: Ship-Distance-App
+username:
+account: larsonbrennan
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3187239
+bundleId: 3834629
+url: https://larsonbrennan.shinyapps.io/Ship-Distance-App/
+when: 1604858563.32936
+asMultiple: FALSE
+asStatic: FALSE
