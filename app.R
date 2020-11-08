@@ -31,10 +31,12 @@ ui <- semanticPage(
                                  h5("NAME OF PORT:", style="font-size:95%", textOutput("renderPortText")),
                                  h5("NAME OF DESTINATION:", style="font-size:95%", textOutput("renderDestinationText")),
                                 ),
+                   
                    #This main panel displays the map with the distance traveled on it
                    main_panel(tags$style(type = "text/css", "#map {height: calc(50vh - 10px) !important;}"),
                               leafletOutput("map", width = "100%", height = "50%")),
                    mirrored = FALSE, min_height = "auto"),
+  
   #This sidebar layout is below the map and above selection inputs. It displays
   #two plots, one that shows the how fast the ship was going at certain times
   #and another plot that shows the effect course direction has on speed
@@ -47,6 +49,7 @@ ui <- semanticPage(
 
 #this is the server section of the app
 server <- function(input, output, session) {
+  
   #this renderUI portion is for deciding what kind of ship will be selected.
   #it calls the twoShips data frame created at the beginning of the app and
   #selects the type of ship based on that. The default option is a tug boat.
@@ -59,6 +62,7 @@ server <- function(input, output, session) {
       selected = "Tug")
     
   })
+  
   #this is another renderUI portion, and it determines what the ship name is based
   #on user selection. It takes the previously selected ship type, and only displays
   #names of ships that are under that ship type. 
@@ -85,6 +89,7 @@ server <- function(input, output, session) {
     topDistance <- toString(maxValueList$distance[2])
     topDistance
   })
+  
   #This portion of the app render the name of the port that the ship is from. It calls
   #the getDataSet and inputs the name of the ship the user selects.It then calls the 
   #getPortText function below.
@@ -92,6 +97,7 @@ server <- function(input, output, session) {
     shipSubSet<-getDataSet(input$nameOfShip)
     getPortText(shipSubSet)
   })
+  
   #This portion of the app creates a function that takes in the name of the ship,
   #and it selects for the name of the port. It takes the first row of the dataset
   #and returns the port name from the port variable column.
@@ -100,6 +106,7 @@ server <- function(input, output, session) {
     shipPort <-shipSubSet$port[1]
     shipPort
   }
+  
   #This portion of the app render the name of the destination that the ship is going to. It calls
   #the getDataSet and inputs the name of the ship the user selects.It then calls the 
   #getDestinationText function below.
@@ -107,6 +114,7 @@ server <- function(input, output, session) {
     shipSubSet<-getDataSet(input$nameOfShip)
     getDestinationText(shipSubSet)
   })
+  
   #This portion of the app creates a function that takes in the name of the ship,
   #and it selects for the name of the destination. It takes the first row of the dataset
   #and returns the destination name from the destination variable column.
@@ -115,6 +123,7 @@ server <- function(input, output, session) {
     shipPort <-shipSubSet$DESTINATION[1]
     shipPort
   }
+  
   #This portion of the app renders the speed of the ship at certain times by displaying
   #a scatterplot diagram of this. It calls the getDataSet function by the name of the ship
   #that the user selects. It then calls the subSetTimeOnSpeed function from below, and
@@ -123,6 +132,7 @@ server <- function(input, output, session) {
     shipSubSet<-getDataSet(input$nameOfShip)
     subSetTimeOnSpeed(shipSubSet)
   })
+  
   #This portion of the app returns a plot to be displayed by the above output$subSetTimeOnSpeedPlot
   #renderPlot output. It creates a dataframe when the input is a dataframe, and it then
   #creates a scatterplot showing the speeds of the ship at certain times.
@@ -178,6 +188,7 @@ server <- function(input, output, session) {
   #longitude, latitude, and longest distance for the row with the longest distance
   #and the row before that row
   distancesDataset <- reactive({
+    
     #Function for calculating the distances travelled. It is possible to use a 
     #a different function from the geosphere library, but I prefer this function
     #because it is easier to tweak
@@ -203,18 +214,22 @@ server <- function(input, output, session) {
     #call the getDataSet function and input the name of the ship nameOfShipSelector renderUI
     #portion above. Put the dataset into a new value called shipsInitial.
     shipsInitial<-getDataSet(input$nameOfShip)
+    
     #take only the LAT and LON variables of the newly created dataframe and put 
     #them into a new dataframe called shipsLatLon
     shipsLatLon<-data.frame(shipsInitial$LAT, shipsInitial$LON)
   
     #find the number of rows in the new dataframe shipsLatLon
     lastRowNumber<-nrow(shipsLatLon)
+    
     #create a new dataframe called shipsLatLonFirst and take all of the rows from the first
     #instance to the last
   shipsLatLonFirst <- shipsLatLon[1:lastRowNumber,]
+  
   #create a new dataframe called shipsLatLonSecond and take all of the rows from the first
   #instance to the last
   shipsLatLonSecond <- shipsLatLon[1:lastRowNumber,]
+  
   #delete the first row of the shipsLatLonFirst dataframe
   shipsLatLonFirst <- shipsLatLonFirst[-1,]
   
@@ -225,21 +240,27 @@ server <- function(input, output, session) {
   #calculate the distances between the shipsLatLonFirst and the shipsLatLonSecond dataframes
   #and put them into a vector called distance
   distance<-get_geo_distance(shipsLatLonFirst$shipsInitial.LON, shipsLatLonFirst$shipsInitial.LAT, shipsLatLonSecond$shipsInitial.LON, shipsLatLonSecond$shipsInitial.LAT, units = "km")
+  
   #combine the vector with the dataframe shipsLatLonSecond so a distance column is created
   #with the distance values in that column
   shipsLatLonSecond<-cbind(shipsLatLonSecond, distance)
+  
   #the values in the distances column are in km and should be in meters instead. This converts
   #them into meters
   shipsLatLonSecond$distance <- shipsLatLonSecond$distance * 1000
+  
   #find the number of rows in the shipsLatLonSecond dataframe
   lastRowNumber<-nrow(shipsLatLonSecond)
+  
   #put the distance traveled of 0 at the end of the shipsLatLonSecond distance variable
   #column. The shipsLatLonSecond$distance[lastRowNumber] makes sure that 0 is placed at the end in the right column
   shipsLatLonSecond$distance[lastRowNumber] <- 0
+  
   #shifts the values in the distance column up down one place. This is why we placed 0 at the end of the column, so it will be replaced
   #by the final distance traveled value above it.
   shipsLatLonSecond<-shipsLatLonSecond %>%
     mutate(distance=lag(distance))
+  
   #places the distance traveled in the first column at 0. This is because this is the initial distance. The ship has not traveled yet.
   #There is no value there now because of the column being shifted down one place, so now we can fill it without replacing
   #a different value that was initially there.
@@ -247,6 +268,7 @@ server <- function(input, output, session) {
   
   #find the max value in the distance column and put it into an integer value called maxValue.
   maxValue<-max(shipsLatLonSecond$distance, na.rm = TRUE)
+  
   #these three lines of code finds the instances where the maxValue variable is, and then puts the 
   #distance, lon, and lat of the largest distance instances, and the distance, lon, and lat values
   #of the previous row(s). A dataframe called maxValueList is created. Only the last instance of the 
@@ -263,13 +285,17 @@ server <- function(input, output, session) {
   
   #this portion of the app is for the creation of the map that is to be displayed
   output$map <- renderLeaflet({
+ 
     #this line of code calls the distancesDataset function from above, and takes that dataframe
     #and puts it into a new dataframe called maxValueList
     maxValueList <-  distancesDataset()
+    
     #give variable names for the new dataframe created
     colnames(maxValueList) <- c("LAT", "LON", "distance")
+    
     #call the leaflet function and create the map
     leaflet() %>% addTiles() %>%
+      
       #the addPolylines function creates lines between the lon and the lat of the initial
       #point and the ending point. 
       addPolylines(data = maxValueList,
@@ -278,12 +304,14 @@ server <- function(input, output, session) {
                        weight = 3,
                        opacity = 3,
                   color = "orange" ) %>%
+      
       #this portion adds a circle marker for the initial point on a map
       addCircleMarkers(lng = maxValueList$LON[1], lat = maxValueList$LAT[1], color = "white",
                        label = "STARTING POINT",
                        labelOptions = labelOptions(noHide = T, textsize = "10px",
                                                    style = list("color" = "orange")) 
                        ) %>%
+      
       #this portion adds a circle marker for the ending point on a map
     addCircleMarkers(lng = maxValueList$LON[2], lat = maxValueList$LAT[2],  color = "white",
                      label = "END POINT",
